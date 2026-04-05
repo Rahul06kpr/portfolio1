@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>K P Rahul Kumar — CS Engineer</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── TOKENS ── */
+    :root{
+      --bg:#0d0d0d;--surface:#111;--border:#1e1e1e;
+      --text:#d4d4d4;--muted:#555;--accent:#39ff14;
+      --accent2:#00ffe1;--heading:#f0f0f0;--tag-bg:#161616;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.75;min-height:100vh;cursor:none;overflow-x:hidden;}
+
+    /* ── CURSOR ── */
+    #cursor{position:fixed;z-index:9999;width:13px;height:13px;border:2px solid var(--accent);border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);mix-blend-mode:exclusion;transition:width .18s,height .18s,background .18s;}
+    #cursor.hov{width:34px;height:34px;background:rgba(57,255,20,.1);}
+    #cursor-dot{position:fixed;z-index:9999;width:3px;height:3px;background:var(--accent);border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);}
+
+    /* ── PAGES ── */
+    .page{display:none;min-height:100vh;}
+    .page.active{display:block;}
+
+    /* ── HOME PAGE ── */
+    #page-home{position:relative;overflow:hidden;height:100vh;}
+    #bg-canvas{position:absolute;inset:0;z-index:0;}
+    .dot-grid{position:fixed;inset:0;z-index:1;background-image:radial-gradient(circle,rgba(255,255,255,.07) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;}
+    .vignette{position:fixed;inset:0;z-index:2;background:radial-gradient(ellipse at center,transparent 38%,rgba(0,0,0,.75) 100%);pointer-events:none;}
+    .home-ui{position:absolute;inset:0;z-index:10;}
+
+    .logo{position:absolute;top:28px;left:36px;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;cursor:pointer;}
+    .logo span{color:#555;}
+
+    .top-note{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-size:11px;color:#555;white-space:nowrap;letter-spacing:.5px;}
+    .top-note em{color:var(--accent);font-style:normal;}
+
+    .hero-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;user-select:none;pointer-events:none;}
+    .hero-text h1{font-family:'Syne',sans-serif;font-size:clamp(42px,7vw,98px);font-weight:800;line-height:1;letter-spacing:-2px;}
+    .hero-text h1 .solid{color:rgba(255,255,255,.88);}
+    .hero-text h1 .ghost{color:transparent;-webkit-text-stroke:1.5px rgba(255,255,255,.18);}
+    .hero-text .sub{font-size:11px;color:#555;letter-spacing:4px;text-transform:uppercase;margin-top:18px;}
+    .hero-text .sub em{color:var(--accent);font-style:normal;}
+
+    .home-nav{position:absolute;bottom:48px;right:48px;display:flex;flex-direction:column;align-items:flex-end;gap:9px;}
+    .home-nav a{font-size:14px;color:#666;text-decoration:none;letter-spacing:.5px;transition:color .22s,letter-spacing .28s;position:relative;cursor:pointer;}
+    .home-nav a::after{content:'';position:absolute;right:0;bottom:-2px;width:0;height:1px;background:var(--accent);transition:width .3s;}
+    .home-nav a:hover{color:var(--accent);letter-spacing:2px;}
+    .home-nav a:hover::after{width:100%;}
+
+    .home-status{position:absolute;bottom:48px;left:36px;font-size:11px;color:#444;line-height:2;}
+    .pulse-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:middle;animation:pulse 2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(57,255,20,.4);}50%{box-shadow:0 0 0 7px rgba(57,255,20,0);}}
+
+    /* ── INNER PAGE SHELL ── */
+    #inner-nav{display:none;position:sticky;top:0;z-index:100;background:rgba(13,13,13,.95);border-bottom:1px solid var(--border);padding:15px 0;backdrop-filter:blur(14px);}
+    #inner-nav.active{display:block;}
+    .inav-wrap{max-width:880px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+    .inav-logo{font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;letter-spacing:.5px;}
+    .inav-logo span{color:#444;}
+    .inav-links{display:flex;gap:20px;list-style:none;}
+    .inav-links a{color:var(--muted);font-size:12px;cursor:pointer;text-decoration:none;transition:color .2s;}
+    .inav-links a:hover,.inav-links a.active{color:var(--accent);}
+
+    .page-wrap{max-width:880px;margin:0 auto;padding:0 28px;}
+    .page-bg{position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,rgba(255,255,255,.03) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;}
+    .inner-content{position:relative;z-index:1;}
+
+    .page-header{padding:60px 0 44px;border-bottom:1px solid var(--border);}
+    .breadcrumb{font-size:11px;color:var(--muted);margin-bottom:12px;letter-spacing:1px;}
+    .breadcrumb em{color:var(--accent);font-style:normal;}
+    .page-header h1{font-family:'Syne',sans-serif;font-size:clamp(30px,5vw,56px);font-weight:800;color:var(--heading);line-height:1.05;letter-spacing:-1px;}
+    .page-header p{max-width:520px;color:var(--muted);font-size:13px;margin-top:14px;line-height:1.85;}
+
+    section.inner{padding:48px 0;border-bottom:1px solid var(--border);}
+    section.inner:last-of-type{border-bottom:none;}
+    .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:32px;}
+    .sec-head h2{font-size:11px;color:var(--accent);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;}
+    .sec-line{flex:1;height:1px;background:var(--border);}
+
+    .tag-list{display:flex;flex-wrap:wrap;gap:8px;}
+    .tag{display:inline-block;padding:3px 11px;font-size:12px;color:var(--text);background:var(--tag-bg);border:1px solid var(--border);transition:border-color .2s,color .2s;}
+    .tag:hover{border-color:var(--accent);color:var(--accent);}
+
+    .pfooter{padding:28px 0 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);}
+    .pfooter a{color:var(--muted);cursor:pointer;text-decoration:none;}
+    .pfooter a:hover{color:var(--accent);}
+
+    /* fade in */
+    .fi{opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease;}
+    .fi.in{opacity:1;transform:none;}
+
+    /* ── ABOUT ── */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+    @media(max-width:580px){.two-col{grid-template-columns:1fr;}}
+    .sg{margin-bottom:22px;}
+    .sg h3{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:9px;}
+    .info-row{display:flex;gap:10px;font-size:12px;margin-bottom:7px;}
+    .info-row .lbl{color:var(--accent);min-width:88px;}
+    .tl-item{display:grid;grid-template-columns:110px 1fr;gap:22px;padding:22px 0;border-bottom:1px solid var(--border);}
+    .tl-item:last-child{border-bottom:none;}
+    .tl-date{font-size:11px;color:var(--muted);padding-top:2px;}
+    .tl-role{font-size:14px;color:var(--heading);font-weight:600;margin-bottom:3px;}
+    .tl-org{font-size:12px;color:var(--accent);margin-bottom:7px;}
+    .tl-desc{font-size:12px;color:var(--muted);line-height:1.7;}
+    @media(max-width:500px){.tl-item{grid-template-columns:1fr;gap:5px;}}
+
+    /* ── PROJECTS ── */
+    .proj-card{padding:34px 30px;border:1px solid var(--border);background:var(--surface);margin-bottom:1px;position:relative;overflow:hidden;transition:background .22s;}
+    .proj-card:hover{background:#161616;}
+    .proj-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);transform:scaleY(0);transform-origin:top;transition:transform .28s ease;}
+    .proj-card:hover::before{transform:scaleY(1);}
+    .proj-num{font-size:11px;color:var(--muted);margin-bottom:12px;}
+    .proj-card h2{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:var(--heading);margin-bottom:9px;letter-spacing:-.5px;}
+    .proj-card p{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:18px;max-width:620px;}
+    .proj-stack{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
+    .proj-stack span{font-size:10px;padding:2px 9px;border:1px solid var(--border);color:var(--accent2);letter-spacing:.5px;}
+    .proj-links{display:flex;gap:14px;align-items:center;}
+    .proj-links a{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;}
+    .proj-links a:hover{color:var(--accent);}
+    .proj-links a::before{content:'↗ ';}
+    .soon{font-size:11px;color:var(--muted);font-style:italic;}
+
+    /* ── CERTIFICATIONS ── */
+    .cert-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;border:1px solid var(--border);}
+    @media(max-width:560px){.cert-grid{grid-template-columns:1fr;}}
+    .cert-card{padding:30px 26px;background:var(--surface);transition:background .2s;position:relative;overflow:hidden;}
+    .cert-card:hover{background:#161616;}
+    .cert-card::after{content:'';position:absolute;bottom:0;left:0;width:0;height:2px;background:var(--accent);transition:width .32s ease;}
+    .cert-card:hover::after{width:100%;}
+    .cert-icon{font-size:26px;margin-bottom:14px;display:block;}
+    .cert-card h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--heading);margin-bottom:5px;line-height:1.3;}
+    .cert-issuer{font-size:11px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:9px;}
+    .cert-card p{font-size:12px;color:var(--muted);line-height:1.65;}
+    .cert-card.wide{grid-column:span 2;}
+    @media(max-width:560px){.cert-card.wide{grid-column:span 1;}}
+
+    /* ── ACHIEVEMENTS ── */
+    .ach-item{display:grid;grid-template-columns:130px 1fr;gap:28px;padding:32px 0;border-bottom:1px solid var(--border);align-items:start;}
+    .ach-item:last-child{border-bottom:none;}
+    @media(max-width:500px){.ach-item{grid-template-columns:1fr;gap:10px;}}
+    .ach-stat{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--accent);line-height:1;letter-spacing:-2px;}
+    .ach-stat small{display:block;font-size:11px;color:var(--muted);letter-spacing:2px;font-family:'IBM Plex Mono',monospace;font-weight:400;margin-top:5px;}
+    .ach-body h3{font-size:16px;color:var(--heading);font-weight:600;margin-bottom:8px;}
+    .ach-body p{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:10px;}
+    .intern-card{padding:30px;border:1px solid var(--border);background:var(--surface);position:relative;overflow:hidden;}
+    .intern-card::before{content:'';position:absolute;top:0;left:0;height:3px;width:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+    .intern-card h3{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:var(--heading);margin-bottom:5px;}
+    .intern-company{font-size:13px;color:var(--accent);margin-bottom:11px;}
+    .intern-card p{font-size:13px;color:var(--muted);line-height:1.8;}
+
+    /* ── CONTACT ── */
+    .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;}
+    @media(max-width:600px){.contact-grid{grid-template-columns:1fr;}}
+    .c-intro h2{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--heading);margin-bottom:12px;letter-spacing:-.5px;}
+    .c-intro p{font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:12px;}
+    .avail{margin-top:24px;padding:18px;border:1px solid var(--border);background:var(--surface);}
+    .avail h3{font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+    .avail-row{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin-bottom:6px;}
+    .avail-row .chk{color:var(--accent);}
+    .c-links{display:flex;flex-direction:column;gap:10px;}
+    .c-link{display:flex;align-items:center;gap:13px;font-size:13px;color:var(--muted);text-decoration:none;padding:15px 17px;border:1px solid var(--border);transition:border-color .2s,color .2s;position:relative;overflow:hidden;}
+    .c-link::before{content:'';position:absolute;inset:0;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .24s;opacity:.06;}
+    .c-link:hover::before{transform:scaleX(1);}
+    .c-link:hover{border-color:var(--accent);color:var(--accent);}
+    .c-icon{color:var(--accent);font-size:15px;z-index:1;}
+    .c-link span{z-index:1;}
+    .c-arr{margin-left:auto;opacity:0;transition:opacity .2s,transform .2s;transform:translateX(-4px);z-index:1;}
+    .c-link:hover .c-arr{opacity:1;transform:translateX(0);}
+
+    /* ── PAGE TRANSITION ── */
+    #wipe{position:fixed;inset:0;z-index:500;background:var(--bg);pointer-events:none;clip-path:inset(0 100% 0 0);transition:clip-path .4s cubic-bezier(.76,0,.24,1);}
+    #wipe.show{clip-path:inset(0 0% 0 0);}
+    #wipe.hide{clip-path:inset(0 100% 0 0);}
+  </style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-dot"></div>
+<div id="wipe"></div>
+
+<!-- ════════════════════════════════════════════════
+     HOME PAGE
+════════════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <canvas id="bg-canvas"></canvas>
+  <div class="dot-grid"></div>
+  <div class="vignette"></div>
+  <div class="home-ui">
+    <a class="logo" data-page="home">~/rahul<span>.dev</span></a>
+    <div class="top-note">B.E. CSE · Chennai Institute of Technology · <em>2024–2028</em></div>
+    <div class="hero-text">
+      <h1>
+        <span class="solid">build,</span><br/>
+        <span class="ghost">learn</span><br/>
+        <span class="solid">&amp; ship.</span>
+      </h1>
+      <p class="sub">K P Rahul Kumar · <em>CS Engineer</em></p>
+    </div>
+    <nav class="home-nav">
+      <a data-page="about">about</a>
+      <a data-page="projects">projects</a>
+      <a data-page="certifications">certifications</a>
+      <a data-page="achievements">achievements</a>
+      <a data-page="contact">contact</a>
+    </nav>
+    <div class="home-status">
+      <span class="pulse-dot"></span>open to internship opportunities<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Chennai, Tamil Nadu, IN
+    </div>
+  </div>
+</div>
+
+<!-- INNER NAV (shown on all inner pages) -->
+<nav id="inner-nav">
+  <div class="inav-wrap">
+    <span class="inav-logo" data-page="home">~/rahul<span>.dev</span></span>
+    <ul class="inav-links">
+      <li><a data-page="about">about</a></li>
+      <li><a data-page="projects">projects</a></li>
+      <li><a data-page="certifications">certifications</a></li>
+      <li><a data-page="achievements">achievements</a></li>
+      <li><a data-page="contact">contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════════
+     ABOUT
+════════════════════════════════════════════════ -->
+<div id="page-about" class="page">
+  <div class="page-bg"></div>
+  <div class="inner-content">
+    <div class="page-wrap">
+      <div class="page-header fi">
+        <p class="breadcrumb">~/rahul.dev / <em>about</em></p>
+        <h1>About me.</h1>
+        <p>CS undergraduate, problem solver, and builder of things that run on machines.</p>
+      </div>
+
+      <section class="inner">
+        <div class="sec-head"><h2>~/profile</h2><div class="sec-line"></div></div>
+        <div class="two-col fi">
+          <div>
+            <p style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:13px;">I'm K P Rahul Kumar — a B.E. Computer Science &amp; Engineering student at Chennai Institute of Technology, Kundrathur (Batch 2024–2028).</p>
+            <p style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:13px;">I work across web development, ML-driven systems, Java programming, and API development. I'm drawn to industrial fault detection, healthcare AI, and IoT-connected systems.</p>
+            <p style="font-size:13px;color:var(--muted);line-height:1.9;">I stay sharp through daily competitive programming on LeetCode and SkillRack, and completed an internship at CSC with hands-on enterprise software experience.</p>
+          </div>
+          <div>
+            <div class="info-row"><span class="lbl">name</span><span>K P Rahul Kumar</span></div>
+            <div class="info-row"><span class="lbl">degree</span><span>B.E. CSE</span></div>
+            <div class="info-row"><span class="lbl">college</span><span>CIT, Kundrathur</span></div>
+            <div class="info-row"><span class="lbl">batch</span><span>2024 – 2028</span></div>
+            <div class="info-row"><span class="lbl">location</span><span>Chennai, IN</span></div>
+            <div class="info-row"><span class="lbl">email</span><span>pnraahul@gmail.com</span></div>
+            <div class="info-row"><span class="lbl">phone</span><span>7200316282</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="inner">
+        <div class="sec-head"><h2>~/skills</h2><div class="sec-line"></div></div>
+        <div class="two-col fi">
+          <div>
+            <div class="sg"><h3>languages</h3>
+              <div class="tag-list"><span class="tag">Python</span><span class="tag">Java</span><span class="tag">C++</span><span class="tag">HTML</span><span class="tag">CSS</span></div>
+            </div>
+            <div class="sg"><h3>specialisations</h3>
+              <div class="tag-list"><span class="tag">Web Development</span><span class="tag">API Development</span><span class="tag">Machine Learning</span><span class="tag">IoT</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="sg"><h3>tools &amp; platforms</h3>
+              <div class="tag-list"><span class="tag">MongoDB</span><span class="tag">GitHub</span><span class="tag">LeetCode</span><span class="tag">SkillRack</span></div>
+            </div>
+            <div class="sg"><h3>interests</h3>
+              <div class="tag-list"><span class="tag">Industrial AI</span><span class="tag">Healthcare ML</span><span class="tag">Edge Systems</span><span class="tag">Competitive Programming</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="inner">
+        <div class="sec-head"><h2>~/education &amp; experience</h2><div class="sec-line"></div></div>
+        <div class="fi">
+          <div class="tl-item">
+            <div class="tl-date">2024 — 2028</div>
+            <div>
+              <div class="tl-role">B.E. Computer Science &amp; Engineering</div>
+              <div class="tl-org">Chennai Institute of Technology, Kundrathur</div>
+              <div class="tl-desc">Machine Learning, Computer Networks, Cybersecurity, Theory of Computation, Advanced Java, Software Engineering.</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-date">Internship</div>
+            <div>
+              <div class="tl-role">Software Engineering Intern</div>
+              <div class="tl-org">CSC — Computer Sciences Corporation</div>
+              <div class="tl-desc">Enterprise software development workflows and real-world engineering environments.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="pfooter"><span>© 2026 K P Rahul Kumar</span><a data-page="home">← back home</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     PROJECTS
+════════════════════════════════════════════════ -->
+<div id="page-projects" class="page">
+  <div class="page-bg"></div>
+  <div class="inner-content">
+    <div class="page-wrap">
+      <div class="page-header fi">
+        <p class="breadcrumb">~/rahul.dev / <em>projects</em></p>
+        <h1>Projects.</h1>
+        <p>Things I've built, researched, and shipped — with full source code viewable inline.</p>
+      </div>
+
+      <section class="inner">
+        <div class="sec-head"><h2>~/work</h2><div class="sec-line"></div></div>
+
+        <!-- PROJECT 01 -->
+        <div class="proj-card fi" id="proj-01">
+          <div class="proj-num">01 ——</div>
+          <h2>Industrial Fault Detection Dashboard</h2>
+          <p>A real-time Streamlit dashboard for industrial equipment fault detection using a CNN (RobustFaultCNN) built with PyTorch. Processes raw sensor signals, extracts windowed features, computes kurtosis-based fault probability, and renders 3D signal surface and machine stress visualizations with Plotly. Supports synthetic data generation, CSV upload, and manual signal entry.</p>
+          <div class="proj-stack">
+            <span>Python</span><span>PyTorch</span><span>Streamlit</span><span>Plotly</span>
+            <span>CNN</span><span>Numpy</span><span>Pandas</span>
+          </div>
+          <div class="proj-feats">
+            <div class="feat-row"><span class="feat-dot"></span>RobustFaultCNN — Conv1d → MaxPool → AdaptiveAvgPool architecture</div>
+            <div class="feat-row"><span class="feat-dot"></span>Windowed signal preprocessing (128-sample windows)</div>
+            <div class="feat-row"><span class="feat-dot"></span>3D signal surface &amp; machine stress heatmap (Plotly)</div>
+            <div class="feat-row"><span class="feat-dot"></span>Edge mode toggle for fast inference</div>
+            <div class="feat-row"><span class="feat-dot"></span>Kurtosis-based fault probability scoring</div>
+          </div>
+          <button class="code-toggle-btn" onclick="toggleCode('code-01', this)">
+            <span class="btn-icon">⟨/⟩</span> View Source Code
+          </button>
+          <div class="code-viewer" id="code-01">
+            <div class="code-header">
+              <span class="code-filename">epapp.py</span>
+              <button class="copy-btn" onclick="copyCode('code-01-pre')">copy</button>
+            </div>
+            <pre id="code-01-pre" class="code-block"><code id="hl-01"></code></pre>
+          </div>
+        </div>
+
+        <!-- PROJECT 02 -->
+        <div class="proj-card fi" id="proj-02">
+          <div class="proj-num">02 ——</div>
+          <h2>ML-Driven CVD Risk Analysis</h2>
+          <p>A comprehensive cardiovascular disease early-detection app built with Streamlit. Takes 20+ clinical inputs — blood pressure, cholesterol, triglycerides, CRP, homocysteine, BMI, lifestyle factors — and runs a rule-based heuristic engine to generate a risk parameter table and personalized clinical insights. Co-authored with Joseph Ashish Theron Fernando (24CS0389).</p>
+          <div class="proj-stack">
+            <span>Python</span><span>Streamlit</span><span>Pandas</span>
+            <span>Healthcare AI</span><span>Clinical Heuristics</span><span>Risk Analysis</span>
+          </div>
+          <div class="proj-feats">
+            <div class="feat-row"><span class="feat-dot"></span>20+ clinical risk factor inputs with validated ranges</div>
+            <div class="feat-row"><span class="feat-dot"></span>ATP III cholesterol &amp; WHO BMI classification</div>
+            <div class="feat-row"><span class="feat-dot"></span>CRP inflammation markers &amp; homocysteine vascular risk</div>
+            <div class="feat-row"><span class="feat-dot"></span>Structured report DataFrame + bullet-point insights</div>
+            <div class="feat-row"><span class="feat-dot"></span>Animated progress bar analysis UX</div>
+          </div>
+          <button class="code-toggle-btn" onclick="toggleCode('code-02', this)">
+            <span class="btn-icon">⟨/⟩</span> View Source Code
+          </button>
+          <div class="code-viewer" id="code-02">
+            <div class="code-header">
+              <span class="code-filename">app.py</span>
+              <button class="copy-btn" onclick="copyCode('code-02-pre')">copy</button>
+            </div>
+            <pre id="code-02-pre" class="code-block"><code id="hl-02"></code></pre>
+          </div>
+        </div>
+
+      </section>
+      <div class="pfooter"><span>© 2026 K P Rahul Kumar</span><a data-page="home">← back home</a></div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── project feature list ── */
+.proj-feats{margin-bottom:20px;}
+.feat-row{display:flex;align-items:flex-start;gap:10px;font-size:12px;color:var(--muted);padding:4px 0;border-bottom:1px solid #191919;}
+.feat-row:last-child{border-bottom:none;}
+.feat-dot{width:5px;height:5px;min-width:5px;border-radius:50%;background:var(--accent);margin-top:6px;}
+
+/* ── code toggle button ── */
+.code-toggle-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 18px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  color:var(--accent);background:transparent;border:1px solid var(--accent);
+  cursor:pointer;transition:background .2s,color .2s;margin-bottom:0;
+}
+.code-toggle-btn:hover{background:var(--accent);color:var(--bg);}
+.code-toggle-btn.open{background:rgba(57,255,20,.08);}
+.btn-icon{font-size:13px;}
+
+/* ── code viewer ── */
+.code-viewer{
+  display:none;margin-top:1px;
+  border:1px solid var(--border);
+  border-top:2px solid var(--accent);
+  background:#0a0a0a;
+  max-height:520px;
+  overflow:hidden;
+  transition:max-height .35s ease;
+}
+.code-viewer.open{display:block;}
+.code-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;background:#111;border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:5;
+}
+.code-filename{font-size:12px;color:var(--accent);letter-spacing:.5px;}
+.copy-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);padding:3px 10px;cursor:pointer;transition:color .2s,border-color .2s;}
+.copy-btn:hover{color:var(--accent);border-color:var(--accent);}
+.code-block{
+  margin:0;padding:20px;
+  overflow-y:auto;overflow-x:auto;
+  max-height:460px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;line-height:1.7;
+  color:#cdd6f4;
+  white-space:pre;
+}
+/* syntax colours */
+.kw{color:#cba6f7;}   /* keywords */
+.fn{color:#89b4fa;}   /* function names / decorators */
+.st{color:#a6e3a1;}   /* strings */
+.cm{color:#585b70;font-style:italic;} /* comments */
+.nm{color:#fab387;}   /* numbers */
+.cl{color:#f38ba8;}   /* class names */
+.bi{color:#89dceb;}   /* builtins */
+</style>
+
+<script>
+// ── Source code strings ───────────────────────────────────────────────────────
+var SRC = {};
+
+SRC['hl-01'] = `import time
+import numpy as np
+import torch
+import torch.nn as nn
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+
+
+# ----------------------
+# MODEL
+# ----------------------
+
+class RobustFaultCNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Conv1d(1, 16, 5, padding=2),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
+
+            nn.Conv1d(16, 32, 5, padding=2),
+            nn.ReLU(),
+            nn.MaxPool1d(2),
+
+            nn.Conv1d(32, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool1d(1),
+        )
+
+    def forward(self, x):
+        x = self.net(x)
+        return x.view(x.size(0), -1)
+
+
+def load_model(edge_mode=True):
+    model = RobustFaultCNN()
+    if edge_mode:
+        model.eval()
+    return model
+
+
+# ----------------------
+# SIGNAL GENERATORS
+# ----------------------
+
+def generate_normal(n=512):
+    t = np.linspace(0, 10, n)
+    signal = np.sin(t) + 0.1 * np.random.randn(n)
+    return signal
+
+
+def generate_fault_bursts(n=512):
+    t = np.linspace(0, 10, n)
+    signal = np.sin(t)
+    for _ in range(5):
+        idx = np.random.randint(50, n - 50)
+        signal[idx : idx + 20] += np.random.uniform(2, 4)
+    signal += 0.2 * np.random.randn(n)
+    return signal
+
+
+# ----------------------
+# INPUT PARSER
+# ----------------------
+
+def parse_manual_signal(txt):
+    try:
+        vals = [float(x.strip()) for x in txt.split(",") if x.strip()]
+        if len(vals) == 0:
+            return None, "No values found"
+        return np.array(vals), None
+    except ValueError:
+        return None, "Invalid number format — use comma-separated numeric values"
+
+
+# ----------------------
+# PREPROCESSING
+# ----------------------
+
+def preprocess_signal(sig, window=128):
+    if len(sig) < window:
+        return None, 0
+    windows = [sig[i : i + window] for i in range(0, len(sig) - window, window)]
+    return np.array(windows), len(windows)
+
+
+# ----------------------
+# 3D VISUALIZATIONS
+# ----------------------
+
+def create_3d_signal_surface(sig):
+    n = 64
+    target = n * n  # 4096
+    if len(sig) >= target:
+        grid_data = sig[:target]
+    else:
+        grid_data = np.pad(sig, (0, target - len(sig)))
+    grid = grid_data.reshape(n, n)
+    x = np.linspace(0, 1, n)
+    y = np.linspace(0, 1, n)
+    padded = len(sig) < target
+    title = "3D Signal Surface" + (" (zero-padded)" if padded else "")
+    fig = go.Figure(data=[go.Surface(z=grid, x=x, y=y, colorscale="Viridis")])
+    fig.update_layout(title=title,
+        scene=dict(xaxis_title="Time", yaxis_title="Window", zaxis_title="Amplitude"))
+    return fig
+
+
+def create_machine_heatmap(sig):
+    theta = np.linspace(0, 2 * np.pi, 40)
+    z_vals = np.linspace(0, 1, 20)
+    Theta, _ = np.meshgrid(theta, z_vals)
+    stress = 0.5 + 0.5 * np.sin(Theta * 4 + np.mean(sig))
+    fig = go.Figure(data=go.Surface(z=stress, x=np.cos(Theta), y=np.sin(Theta), colorscale="Reds"))
+    fig.update_layout(title="Machine Stress Simulation",
+        scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Stress"))
+    return fig
+
+
+# ----------------------
+# FAULT PROBABILITY
+# ----------------------
+
+def compute_fault_probability(source, sig):
+    if source == "normal":
+        return float(np.clip(0.05 + np.random.rand() * 0.1, 0.0, 1.0))
+    elif source == "fault":
+        return float(np.clip(0.80 + np.random.rand() * 0.15, 0.0, 1.0))
+    else:
+        kurt = pd.Series(sig).kurtosis()
+        return float(np.clip(abs(kurt) / 10.0, 0.0, 1.0))
+
+
+# ----------------------
+# STREAMLIT APP
+# ----------------------
+
+st.set_page_config(page_title="Industrial Fault Detection AI", layout="wide")
+st.title("🔧 Industrial Fault Detection Dashboard")
+
+st.sidebar.header("System Settings")
+edge_mode = st.sidebar.checkbox("Edge Mode (Fast)", value=True)
+model = load_model(edge_mode)
+
+if "signal" not in st.session_state:
+    st.session_state.signal = None
+if "source" not in st.session_state:
+    st.session_state.source = None
+
+tab1, tab2 = st.tabs(["Synthetic Data", "Upload / Manual"])
+
+with tab1:
+    c1, c2 = st.columns(2)
+    if c1.button("Generate Normal Signal"):
+        st.session_state.signal = generate_normal()
+        st.session_state.source = "normal"
+        st.rerun()
+    if c2.button("Generate Fault Signal"):
+        st.session_state.signal = generate_fault_bursts()
+        st.session_state.source = "fault"
+        st.rerun()
+
+with tab2:
+    mode = st.radio("Input Method", ["CSV Upload", "Manual Input"])
+    if mode == "CSV Upload":
+        file = st.file_uploader("Upload CSV", type=["csv"])
+        if file:
+            df = pd.read_csv(file)
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if not numeric_cols:
+                st.error("No numeric columns found in the uploaded CSV.")
+            else:
+                col = st.selectbox("Select Column", numeric_cols)
+                if st.button("Analyze Column"):
+                    st.session_state.signal = df[col].dropna().values
+                    st.session_state.source = "manual"
+                    st.rerun()
+    else:
+        default = ",".join([str(round(x, 3)) for x in np.sin(np.linspace(0, 10, 150))])
+        txt = st.text_area("Paste Signal Values (comma-separated)", value=default)
+        if st.button("Process Input"):
+            arr, err = parse_manual_signal(txt)
+            if err:
+                st.error(err)
+            else:
+                st.session_state.signal = arr
+                st.session_state.source = "manual"
+                st.rerun()
+
+if st.session_state.signal is not None:
+    st.divider()
+    st.header("Analysis")
+    sig = st.session_state.signal
+    windows, n_windows = preprocess_signal(sig)
+    if windows is None:
+        st.warning(f"Signal too short — minimum 128 samples required, got {len(sig)}.")
+    else:
+        tensor = torch.tensor(windows, dtype=torch.float32).unsqueeze(1)
+        start = time.perf_counter()
+        with torch.no_grad():
+            features = model(tensor)
+        latency_ms = (time.perf_counter() - start) * 1000
+        kurt = pd.Series(sig).kurtosis()
+        prob = compute_fault_probability(st.session_state.source, sig)
+        status = "FAULT" if prob > 0.5 else "NORMAL"
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("System Status", status)
+        m2.metric("Fault Probability", f"{prob:.2%}")
+        m3.metric("Windows Processed", n_windows)
+        m4.metric("Inference Latency", f"{latency_ms:.2f} ms")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Signal Timeline")
+            st.line_chart(sig)
+        with col2:
+            st.subheader("Signal Statistics")
+            stats = pd.DataFrame({
+                "Metric": ["Min", "Max", "Mean", "Std", "Kurtosis"],
+                "Value": [round(float(sig.min()), 4), round(float(sig.max()), 4),
+                          round(float(sig.mean()), 4), round(float(sig.std()), 4),
+                          round(float(kurt), 4)],
+            }).set_index("Metric")
+            st.dataframe(stats)
+        st.subheader("Window Energy")
+        energy = [float(np.sum(w ** 2)) for w in windows]
+        st.bar_chart(energy)
+        st.subheader("3D Visualizations")
+        st.plotly_chart(create_3d_signal_surface(sig), use_container_width=True)
+        st.plotly_chart(create_machine_heatmap(sig), use_container_width=True)
+else:
+    st.info("Generate data or upload a signal to begin analysis.")`;
+
+SRC['hl-02'] = `import streamlit as st
+import pandas as pd
+import time
+
+
+def analyze_cvd_risk_extended(
+    age, gender, systolic_bp, cholesterol, triglyceride,
+    fasting_blood_sugar, exercise_habits, smoking,
+    family_heart_disease, diabetes, bmi, high_bp_medication,
+    low_hdl_cholesterol, high_ldl_cholesterol,
+    alcohol_consumption, stress_level, sleep_hours,
+    sugar_consumption, crp, homocysteine
+):
+    # Blood Pressure
+    if (gender == "Male" and age >= 15 and systolic_bp > 131) or \
+       (gender == "Female" and age >= 15 and systolic_bp > 127):
+        bp_flag = "High"
+    else:
+        bp_flag = "Normal"
+    if high_bp_medication == "Yes":
+        bp_flag += " (On Medication)"
+
+    # Cholesterol (ATP III)
+    if cholesterol < 200:
+        chol_flag = "Desirable"
+    elif 200 <= cholesterol <= 239:
+        chol_flag = "Borderline High"
+    else:
+        chol_flag = "High"
+
+    # Triglycerides
+    if triglyceride < 150:
+        tg_flag = "Normal"
+    elif 150 <= triglyceride <= 199:
+        tg_flag = "Borderline High"
+    elif 200 <= triglyceride <= 499:
+        tg_flag = "High"
+    else:
+        tg_flag = "Very High"
+
+    # Fasting blood sugar
+    if fasting_blood_sugar < 100:
+        fbs_flag = "Normal"
+    elif 100 <= fasting_blood_sugar < 126:
+        fbs_flag = "Prediabetes"
+    else:
+        fbs_flag = "Diabetes Range"
+
+    # CRP
+    if crp < 1.0:
+        crp_flag = "Low"
+    elif 1.0 <= crp <= 3.0:
+        crp_flag = "Average"
+    else:
+        crp_flag = "High Inflammation"
+
+    # Homocysteine
+    if homocysteine < 10:
+        hcy_flag = "Normal"
+    elif 10 <= homocysteine <= 15:
+        hcy_flag = "Borderline"
+    else:
+        hcy_flag = "High"
+
+    # BMI (WHO)
+    if bmi < 18.5:
+        bmi_flag = "Underweight"
+    elif 18.5 <= bmi < 25:
+        bmi_flag = "Normal weight"
+    elif 25 <= bmi < 30:
+        bmi_flag = "Overweight"
+    else:
+        bmi_flag = "Obese"
+
+    # Stress
+    if stress_level <= 3:
+        stress_flag = "Low"
+    elif stress_level <= 7:
+        stress_flag = "Moderate"
+    else:
+        stress_flag = "High"
+
+    # Sleep
+    if sleep_hours < 6:
+        sleep_flag = "Insufficient"
+    elif 6 <= sleep_hours <= 8:
+        sleep_flag = "Normal"
+    else:
+        sleep_flag = "Excessive"
+
+    params = {
+        "Parameter": ["Age", "Systolic Blood Pressure (mmHg)", "Cholesterol (mg/dL)",
+                       "Triglycerides (mg/dL)", "Fasting Blood Sugar (mg/dL)",
+                       "CRP (mg/L)", "Homocysteine (μmol/L)", "BMI",
+                       "Stress Level (1-10)", "Sleep Hours"],
+        "Value": [age, systolic_bp, cholesterol, triglyceride, fasting_blood_sugar,
+                  crp, homocysteine, bmi, stress_level, sleep_hours],
+        "Interpretation": [f"{age} years", bp_flag, chol_flag, tg_flag, fbs_flag,
+                           crp_flag, hcy_flag, bmi_flag, stress_flag, sleep_flag]
+    }
+    report = pd.DataFrame(params)
+
+    insights = []
+    if bp_flag.startswith("High"):
+        insights.append("Elevated blood pressure is a key risk factor for cardiovascular disease.")
+    if chol_flag in ["Borderline High", "High"]:
+        insights.append("Elevated cholesterol increases heart disease risk.")
+    if tg_flag in ["Borderline High", "High", "Very High"]:
+        insights.append("High triglycerides contribute to cardiovascular risk.")
+    if fbs_flag in ["Prediabetes", "Diabetes Range"] or diabetes != "No":
+        insights.append("Abnormal blood sugar or diabetes increases cardiovascular risk.")
+    if crp_flag == "High Inflammation":
+        insights.append("High CRP suggests systemic inflammation, associated with higher CVD risk.")
+    if hcy_flag == "High":
+        insights.append("Elevated homocysteine increases vascular disease risk.")
+    if bmi_flag in ["Overweight", "Obese"]:
+        insights.append("Excess body weight raises cardiovascular risk.")
+    if smoking != "Non-smoker":
+        insights.append(f"Smoking status ({smoking}) adversely affects heart health.")
+    if exercise_habits == "None":
+        insights.append("Physical inactivity is a modifiable risk factor for heart disease.")
+    if family_heart_disease == "Yes":
+        insights.append("Family history of heart disease adds hereditary risk.")
+    if low_hdl_cholesterol == "Yes":
+        insights.append("Low HDL cholesterol is a risk factor for heart disease.")
+    if high_ldl_cholesterol == "Yes":
+        insights.append("High LDL cholesterol increases atherosclerosis risk.")
+    if alcohol_consumption in ["Regular", "Heavy"]:
+        insights.append("Regular or heavy alcohol may increase cardiovascular risk.")
+    if stress_flag == "High":
+        insights.append("High stress levels can negatively impact heart health.")
+    if sleep_flag == "Insufficient":
+        insights.append("Insufficient sleep is linked to worse cardiovascular outcomes.")
+    if sugar_consumption == "High":
+        insights.append("High sugar intake can contribute to diabetes and heart disease.")
+    if not insights:
+        insights.append("All inputs appear within normal or low-risk ranges.")
+    return report, insights
+
+
+# ── Streamlit UI ──────────────────────────────────────────────────────────────
+
+st.set_page_config(page_title="CVD Early Detection", page_icon="❤️",
+                   layout="centered", initial_sidebar_state="auto")
+
+st.markdown("<h1 style='color:#D00000;'>❤️ ML-driven Multi-Modal CVD Risk Analysis</h1>",
+            unsafe_allow_html=True)
+st.write("---")
+st.header("👤 Patient Data Input")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    age = st.number_input("Age (years)", min_value=1, max_value=120, value=30)
+    gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+    systolic_bp = st.number_input("Systolic Blood Pressure (mmHg)", 70, 200, 120)
+    cholesterol = st.number_input("Cholesterol Level (mg/dL)", 100, 400, 180)
+    triglyceride = st.number_input("Triglyceride Level (mg/dL)", 50, 600, 120)
+    fasting_blood_sugar = st.number_input("Fasting Blood Sugar (mg/dL)", 50, 300, 90)
+
+with col2:
+    exercise_habits = st.selectbox("Exercise Habits",
+        ["Regular (3+ times/week)", "Occasional", "None"])
+    smoking = st.selectbox("Smoking Status",
+        ["Non-smoker", "Former Smoker", "Current Smoker"])
+    family_heart_disease = st.radio("Family history of Heart Disease?", ["No", "Yes"])
+    diabetes = st.radio("Diabetes Status", ["No", "Type 1", "Type 2", "Pre-diabetes"])
+    bmi = st.number_input("BMI", min_value=10.0, max_value=50.0, value=22.0, step=0.1)
+    high_bp_medication = st.radio("Taking Medication for High Blood Pressure?", ["No", "Yes"])
+    low_hdl_cholesterol = st.radio("Low HDL Cholesterol diagnosis?", ["No", "Yes"])
+    high_ldl_cholesterol = st.radio("High LDL Cholesterol diagnosis?", ["No", "Yes"])
+
+stress_level = st.slider("Stress Level (1=low, 10=high)", 1, 10, 5)
+sleep_hours = st.slider("Average Sleep Hours per Night", 0, 12, 7)
+alcohol_consumption = st.selectbox("Alcohol Consumption",
+    ["None", "Occasional", "Regular", "Heavy"])
+sugar_consumption = st.selectbox("Sugar Consumption", ["Low", "Moderate", "High"])
+crp = st.number_input("CRP Level (mg/L)", 0.0, 30.0, 1.0, 0.1, format="%.1f")
+homocysteine = st.number_input("Homocysteine Level (μmol/L)", 2.0, 50.0, 10.0, 0.1, format="%.1f")
+
+st.write("---")
+if st.button("Analyze Risk"):
+    with st.spinner("Analyzing data..."):
+        progress_bar = st.progress(0)
+        for pct in range(0, 101, 10):
+            time.sleep(0.15)
+            progress_bar.progress(pct)
+        report, insights = analyze_cvd_risk_extended(
+            age, gender, systolic_bp, cholesterol, triglyceride,
+            fasting_blood_sugar, exercise_habits, smoking,
+            family_heart_disease, diabetes, bmi, high_bp_medication,
+            low_hdl_cholesterol, high_ldl_cholesterol,
+            alcohol_consumption, stress_level, sleep_hours,
+            sugar_consumption, crp, homocysteine)
+        st.success("Analysis complete!")
+        st.subheader("Risk Parameters Interpretation")
+        st.table(report)
+        st.subheader("Insights")
+        for insight in insights:
+            st.write("- " + insight)
+
+with st.expander("👥 Batch Members"):
+    st.markdown("1. Rahul Kumar - 24CS0393\\n2. Joseph Ashish Theron Fernando - 24CS0389")`;
+
+// ── Syntax highlighter (simple token-based) ───────────────────────────────────
+function highlight(code) {
+  var esc = code
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+  // comments first (before anything else)
+  esc = esc.replace(/(#[^\n]*)/g, '<span class="cm">$1</span>');
+
+  // strings (triple then single/double)
+  esc = esc.replace(/("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')/g, '<span class="st">$1</span>');
+  esc = esc.replace(/("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, '<span class="st">$1</span>');
+
+  // keywords
+  var kws = ['import','from','as','def','class','return','if','elif','else','for','while',
+             'in','not','and','or','is','None','True','False','try','except','with',
+             'raise','pass','break','continue','lambda','yield','global','nonlocal','super'];
+  kws.forEach(function(k){
+    var re = new RegExp('\\b('+k+')\\b','g');
+    esc = esc.replace(re,'<span class="kw">$1</span>');
+  });
+
+  // class names (CapitalCase identifiers)
+  esc = esc.replace(/\b([A-Z][A-Za-z0-9_]+)\b/g,'<span class="cl">$1</span>');
+
+  // function defs & calls
+  esc = esc.replace(/\b(def|class)\s+([A-Za-z_][A-Za-z0-9_]*)/g,
+    '$1 <span class="fn">$2</span>');
+  esc = esc.replace(/\b([a-z_][a-z_0-9]*)(\s*\()/g,'<span class="fn">$1</span>$2');
+
+  // builtins
+  var bis = ['print','len','range','int','float','str','list','dict','set','tuple',
+             'round','abs','min','max','sum','type','isinstance','enumerate','zip'];
+  bis.forEach(function(b){
+    var re = new RegExp('(?<=<span class="fn">)('+b+')(?=</span>)','g');
+    esc = esc.replace(re,'<span class="bi">$1</span>');
+  });
+
+  // numbers
+  esc = esc.replace(/\b(\d+\.?\d*)\b/g,'<span class="nm">$1</span>');
+
+  return esc;
+}
+
+function renderCode(preId, srcId) {
+  var el = document.getElementById(srcId);
+  if (el && SRC[srcId] !== undefined) {
+    el.innerHTML = highlight(SRC[srcId]);
+  }
+}
+
+function toggleCode(viewerId, btn) {
+  var viewer = document.getElementById(viewerId);
+  var isOpen = viewer.classList.contains('open');
+  if (isOpen) {
+    viewer.classList.remove('open');
+    btn.classList.remove('open');
+    btn.innerHTML = '<span class="btn-icon">⟨/⟩</span> View Source Code';
+  } else {
+    viewer.classList.add('open');
+    btn.classList.add('open');
+    btn.innerHTML = '<span class="btn-icon">⟨/⟩</span> Hide Source Code';
+    // render syntax highlight on first open
+    var preId = viewerId === 'code-01' ? 'hl-01' : 'hl-02';
+    renderCode(viewerId+'-pre', preId);
+  }
+}
+
+function copyCode(preId) {
+  var el = document.getElementById(preId);
+  var text = el ? el.innerText : '';
+  navigator.clipboard.writeText(text).then(function(){
+    var btn = el.closest('.code-viewer').querySelector('.copy-btn');
+    if(btn){ btn.textContent='copied!'; setTimeout(function(){btn.textContent='copy';},1800); }
+  });
+}
+</script>
+
+<!-- ════════════════════════════════════════════════
+     CERTIFICATIONS
+════════════════════════════════════════════════ -->
+<div id="page-certifications" class="page">
+  <div class="page-bg"></div>
+  <div class="inner-content">
+    <div class="page-wrap">
+      <div class="page-header fi">
+        <p class="breadcrumb">~/rahul.dev / <em>certifications</em></p>
+        <h1>Certifications.</h1>
+        <p>Credentials earned across programming, databases, IoT, and industry simulations.</p>
+      </div>
+
+      <section class="inner">
+        <div class="sec-head"><h2>~/credentials</h2><div class="sec-line"></div></div>
+        <div class="cert-grid fi">
+          <div class="cert-card wide">
+            <span class="cert-icon">🐍</span>
+            <h3>Programming Essentials in Python</h3>
+            <div class="cert-issuer">Cisco Networking Academy</div>
+            <p>Python fundamentals, control structures, functions, data structures, and OOP through Cisco's structured curriculum.</p>
+          </div>
+          <div class="cert-card">
+            <span class="cert-icon">☕</span>
+            <h3>Advanced Diploma in Java Programming (ADJP)</h3>
+            <div class="cert-issuer">Java Engineering</div>
+            <p>OOP, collections, exception handling, multithreading, and Java application development.</p>
+          </div>
+          <div class="cert-card">
+            <span class="cert-icon">🍃</span>
+            <h3>MongoDB Certification</h3>
+            <div class="cert-issuer">MongoDB University</div>
+            <p>NoSQL design, CRUD operations, aggregation pipelines, indexing, and schema patterns.</p>
+          </div>
+          <div class="cert-card">
+            <span class="cert-icon">🌐</span>
+            <h3>Introduction to Internet of Things</h3>
+            <div class="cert-issuer">IoT Fundamentals</div>
+            <p>IoT architecture, sensor integration, network protocols, and edge computing fundamentals.</p>
+          </div>
+          <div class="cert-card">
+            <span class="cert-icon">🎮</span>
+            <h3>Forage Online Job Simulation</h3>
+            <div class="cert-issuer">EA Sports</div>
+            <p>Real-world software engineering workflows in a game studio simulation context.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="pfooter"><span>© 2026 K P Rahul Kumar</span><a data-page="home">← back home</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     ACHIEVEMENTS
+════════════════════════════════════════════════ -->
+<div id="page-achievements" class="page">
+  <div class="page-bg"></div>
+  <div class="inner-content">
+    <div class="page-wrap">
+      <div class="page-header fi">
+        <p class="breadcrumb">~/rahul.dev / <em>achievements</em></p>
+        <h1>Achievements.</h1>
+        <p>Milestones in competitive programming, industry experience, and consistent daily practice.</p>
+      </div>
+
+      <section class="inner">
+        <div class="sec-head"><h2>~/competitive programming</h2><div class="sec-line"></div></div>
+        <div class="fi">
+          <div class="ach-item">
+            <div class="ach-stat">200+<small>problems solved</small></div>
+            <div class="ach-body">
+              <h3>LeetCode Online Judge</h3>
+              <p>Solved over 200 problems spanning arrays, strings, dynamic programming, graphs, and trees. Consistent daily practice to build algorithmic intuition and placement readiness.</p>
+              <div class="tag-list"><span class="tag">Data Structures</span><span class="tag">Algorithms</span><span class="tag">Dynamic Programming</span><span class="tag">Graphs</span></div>
+            </div>
+          </div>
+          <div class="ach-item">
+            <div class="ach-stat">50+<small>problems solved</small></div>
+            <div class="ach-body">
+              <h3>SkillRack Platform</h3>
+              <p>Completed 50+ challenges covering logic building, array manipulation, strings, and pattern problems for placement preparation.</p>
+              <div class="tag-list"><span class="tag">Logic Building</span><span class="tag">Arrays</span><span class="tag">Strings</span><span class="tag">Placement Prep</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="inner">
+        <div class="sec-head"><h2>~/experience</h2><div class="sec-line"></div></div>
+        <div class="intern-card fi">
+          <h3>Software Engineering Intern</h3>
+          <div class="intern-company">CSC — Computer Sciences Corporation</div>
+          <p>Completed an industry internship gaining hands-on exposure to enterprise software development workflows, real-world engineering environments, and professional software practices.</p>
+        </div>
+      </section>
+
+      <div class="pfooter"><span>© 2026 K P Rahul Kumar</span><a data-page="home">← back home</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     CONTACT
+════════════════════════════════════════════════ -->
+<div id="page-contact" class="page">
+  <div class="page-bg"></div>
+  <div class="inner-content">
+    <div class="page-wrap">
+      <div class="page-header fi">
+        <p class="breadcrumb">~/rahul.dev / <em>contact</em></p>
+        <h1>Let's connect.</h1>
+        <p>Open to internship roles, project collaborations, or just a good conversation about tech.</p>
+      </div>
+
+      <section class="inner">
+        <div class="contact-grid fi">
+          <div class="c-intro">
+            <h2>Say hello.</h2>
+            <p>Whether you have an opportunity, a project idea, or just want to talk about ML, systems, or competitive programming — I'm always open.</p>
+            <p>I respond to emails within 24 hours.</p>
+            <div class="avail">
+              <h3>current status</h3>
+              <div class="avail-row"><span class="chk">✓</span> Open to internships</div>
+              <div class="avail-row"><span class="chk">✓</span> Open to project collaboration</div>
+              <div class="avail-row"><span class="chk">✓</span> Available for tech discussions</div>
+              <div class="avail-row"><span class="chk">✓</span> Chennai, Tamil Nadu, IN</div>
+            </div>
+          </div>
+          <div class="c-links">
+            <a class="c-link" href="mailto:pnraahul@gmail.com">
+              <span class="c-icon">✉</span><span>pnraahul@gmail.com</span><span class="c-arr">→</span>
+            </a>
+            <a class="c-link" href="tel:7200316282">
+              <span class="c-icon">☎</span><span>7200316282</span><span class="c-arr">→</span>
+            </a>
+            <a class="c-link" href="https://github.com/" target="_blank">
+              <span class="c-icon">⌥</span><span>GitHub · RAHUL KUMAR</span><span class="c-arr">→</span>
+            </a>
+            <a class="c-link" href="https://linkedin.com/" target="_blank">
+              <span class="c-icon">↗</span><span>LinkedIn · K P RAHUL KUMAR</span><span class="c-arr">→</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <div class="pfooter">
+        <span>© 2026 K P Rahul Kumar · built with <span style="color:var(--accent)">⟨/⟩</span></span>
+        <a data-page="home">← back home</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     THREE.JS + ROUTER
+════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── Cursor ───────────────────────────────────────────────────────────────────
+var cur=document.getElementById('cursor'),cdot=document.getElementById('cursor-dot');
+document.addEventListener('mousemove',function(e){
+  cur.style.left=e.clientX+'px'; cur.style.top=e.clientY+'px';
+  cdot.style.left=e.clientX+'px'; cdot.style.top=e.clientY+'px';
+});
+function bindHover(el){
+  el.addEventListener('mouseenter',function(){cur.classList.add('hov');});
+  el.addEventListener('mouseleave',function(){cur.classList.remove('hov');});
+}
+document.querySelectorAll('a,button,[data-page]').forEach(bindHover);
+
+// ── SPA Router ───────────────────────────────────────────────────────────────
+var wipe=document.getElementById('wipe');
+var innerNav=document.getElementById('inner-nav');
+var currentPage='home';
+
+function goTo(name){
+  if(name===currentPage)return;
+  // wipe in
+  wipe.classList.add('show');
+  setTimeout(function(){
+    // hide all pages
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+    // show target
+    var target=document.getElementById('page-'+name);
+    if(!target)return;
+    target.classList.add('active');
+    currentPage=name;
+    window.scrollTo(0,0);
+    // nav visibility
+    if(name==='home'){
+      innerNav.classList.remove('active');
+    } else {
+      innerNav.classList.add('active');
+      // update active link
+      document.querySelectorAll('.inav-links a').forEach(function(a){
+        a.classList.toggle('active', a.getAttribute('data-page')===name);
+      });
+    }
+    // trigger fade-ins
+    setTimeout(function(){
+      target.querySelectorAll('.fi').forEach(function(el){
+        el.classList.remove('in');
+        void el.offsetWidth; // reflow
+      });
+      var obs=new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target);}
+        });
+      },{threshold:.06});
+      target.querySelectorAll('.fi').forEach(function(el){obs.observe(el);});
+    },30);
+    // wipe out
+    wipe.classList.remove('show');
+  },380);
+}
+
+// Bind all [data-page] elements
+document.addEventListener('click',function(e){
+  var el=e.target.closest('[data-page]');
+  if(el){
+    var pg=el.getAttribute('data-page');
+    if(pg) goTo(pg);
+  }
+});
+
+// initial fade-ins for home (home has no .fi elements but just in case)
+// ── Three.js ─────────────────────────────────────────────────────────────────
+var canvas=document.getElementById('bg-canvas');
+var W=window.innerWidth, H=window.innerHeight;
+var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(W,H);
+renderer.setClearColor(0x0d0d0d,1);
+
+var scene=new THREE.Scene();
+var camera=new THREE.PerspectiveCamera(60,W/H,0.1,200);
+camera.position.z=22;
+
+// Lights
+var al=new THREE.AmbientLight(0xffffff,.28); scene.add(al);
+var dl1=new THREE.DirectionalLight(0x39ff14,1.1); dl1.position.set(5,8,5); scene.add(dl1);
+var dl2=new THREE.DirectionalLight(0x00ffe1,.75); dl2.position.set(-8,-4,3); scene.add(dl2);
+var pl=new THREE.PointLight(0xff61d2,.7,60); pl.position.set(0,0,10); scene.add(pl);
+
+function mkGlass(){return new THREE.MeshPhysicalMaterial({color:0xaaddff,metalness:.1,roughness:.05,transmission:.9,transparent:true,opacity:.72,reflectivity:1});}
+function mkSolid(){return new THREE.MeshPhysicalMaterial({color:0xcceeff,metalness:.3,roughness:.1,transparent:true,opacity:.5});}
+function mkWire(){return new THREE.MeshBasicMaterial({color:0x39ff14,wireframe:true,transparent:true,opacity:.13});}
+
+var geos=[
+  new THREE.BoxGeometry(1,1,1),
+  new THREE.TorusGeometry(.6,.22,16,40),
+  new THREE.IcosahedronGeometry(.7,0),
+  new THREE.ConeGeometry(.5,1,6),
+  new THREE.OctahedronGeometry(.7),
+  new THREE.TorusGeometry(.38,.12,8,20),
+];
+
+var shapes=[];
+for(var i=0;i<58;i++){
+  var g=geos[Math.floor(Math.random()*geos.length)];
+  var r=Math.random();
+  var m=r>.35?mkGlass():(r>.18?mkSolid():mkWire());
+  var mesh=new THREE.Mesh(g,m);
+  mesh.position.set((Math.random()-.5)*32,(Math.random()-.5)*20,(Math.random()-.5)*18-4);
+  var s=.28+Math.random()*1.15; mesh.scale.setScalar(s);
+  mesh.rotation.set(Math.random()*Math.PI*2,Math.random()*Math.PI*2,Math.random()*Math.PI*2);
+  mesh.userData={rx:(Math.random()-.5)*.009,ry:(Math.random()-.5)*.009,rz:(Math.random()-.5)*.005,
+    fs:.3+Math.random()*.7,fa:.25+Math.random()*.5,fo:Math.random()*Math.PI*2,
+    by:mesh.position.y,bx:mesh.position.x,mi:.4+Math.random()*2,dz:mesh.position.z};
+  scene.add(mesh); shapes.push(mesh);
+}
+
+var tnx=0,tny=0,mnx=0,mny=0;
+document.addEventListener('mousemove',function(e){
+  tnx=(e.clientX/window.innerWidth-.5)*2;
+  tny=-(e.clientY/window.innerHeight-.5)*2;
+});
+window.addEventListener('resize',function(){
+  W=window.innerWidth; H=window.innerHeight;
+  camera.aspect=W/H; camera.updateProjectionMatrix();
+  renderer.setSize(W,H);
+});
+
+var clk=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  // only run Three.js when on home page for performance
+  if(currentPage!=='home')return;
+  var t=clk.getElapsedTime();
+  mnx+=(tnx-mnx)*.04; mny+=(tny-mny)*.04;
+  camera.position.x+=(mnx*2-camera.position.x)*.015;
+  camera.position.y+=(mny*1.2-camera.position.y)*.015;
+  camera.lookAt(0,0,0);
+  for(var i=0;i<shapes.length;i++){
+    var sh=shapes[i],d=sh.userData;
+    sh.rotation.x+=d.rx; sh.rotation.y+=d.ry; sh.rotation.z+=d.rz;
+    sh.position.y=d.by+Math.sin(t*d.fs+d.fo)*d.fa;
+    var df=(d.dz+10)/20;
+    sh.position.x=d.bx+mnx*d.mi*(1-df*.5);
+  }
+  pl.position.x=mnx*8; pl.position.y=mny*6;
+  renderer.render(scene,camera);
+}
+animate();
+</script>
+</body>
+</html>
